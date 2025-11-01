@@ -149,9 +149,7 @@ def main():
 
     BUCKET_NAME = "datalake"
     FOLDERS_TO_CREATE = [
-        "bronze/dbloja/", "silver/dbloja/",
-        "bronze/json/", "silver/json/",
-        "bronze/ibge/", "silver/ibge/"
+        "bronze/dbloja/"
     ]
 
     POSTGRES_HOST = "db"

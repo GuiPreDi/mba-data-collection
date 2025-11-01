@@ -1,34 +1,14 @@
--- SEÇÃO 1: LIMPEZA DO AMBIENTE
---
---
 DROP TABLE IF EXISTS db_loja.pedido_itens, db_loja.pedido_cabecalho, db_loja.produtos, db_loja.categorias_produtos, db_loja.clientes CASCADE;
 DROP SCHEMA IF EXISTS db_loja;
 
-
---
--- SEÇÃO 2: CRIAÇÃO DO SCHEMA
---
--- Um schema é como uma pasta dentro do banco de dados, usado para organizar as tabelas e outros objetos.
--- Isso evita conflitos de nomes e melhora a organização.
---
 CREATE SCHEMA IF NOT EXISTS db_loja;
 
---
--- SEÇÃO 3: ESTRUTURA DAS TABELAS (CREATE TABLE)
---
--- Aqui definimos a estrutura de cada tabela, suas colunas, tipos de dados e restrições.
---
-
--- Tabela: categorias_produtos
--- Armazena as categorias às quais os produtos podem pertencer.
 CREATE TABLE db_loja.categorias_produto (
     id INTEGER PRIMARY KEY,                 -- Chave primária: identificador único da categoria.
     nome VARCHAR(100) NOT NULL UNIQUE,      -- Nome da categoria, não pode ser nulo e deve ser único.
     descricao TEXT                          -- Descrição opcional da categoria.
 );
 
--- Tabela: produtos
--- Contém todos os produtos da loja.
 CREATE TABLE db_loja.produto (
     id INTEGER PRIMARY KEY,                 -- Chave primária: identificador único do produto.
     nome VARCHAR(255) NOT NULL,             -- Nome do produto, não pode ser nulo.
@@ -43,8 +23,6 @@ CREATE TABLE db_loja.produto (
         REFERENCES db_loja.categorias_produto(id) -- Tabela e coluna referenciadas.
 );
 
--- Tabela: clientes
--- Armazena os dados dos clientes cadastrados.
 CREATE TABLE db_loja.cliente (
     id INTEGER PRIMARY KEY,                 -- Chave primária: identificador único do cliente.
     nome VARCHAR(150) NOT NULL,             -- Nome do cliente.
@@ -54,8 +32,6 @@ CREATE TABLE db_loja.cliente (
     is_date BOOLEAN DEFAULT FALSE NOT NULL -- Marcação se o registro foi excluído.
 );
 
--- Tabela: pedido_cabecalho
--- Armazena as informações gerais de cada pedido.
 CREATE TABLE db_loja.pedido_cabecalho (
     id INTEGER PRIMARY KEY,                 -- Chave primária: identificador único do pedido.
     id_cliente INT NOT NULL,                -- Chave estrangeira para a tabela 'clientes'.
@@ -63,11 +39,9 @@ CREATE TABLE db_loja.pedido_cabecalho (
     valor_total NUMERIC(10, 2) NOT NULL,    -- Valor total do pedido.
     CONSTRAINT fk_cliente
         FOREIGN KEY(id_cliente)
-        REFERENCES db_loja.clientes(id)
+        REFERENCES db_loja.cliente(id)
 );
 
--- Tabela: pedido_itens
--- Detalha os produtos contidos em cada pedido. Uma linha para cada produto em um pedido.
 CREATE TABLE db_loja.pedido_itens (
     id INTEGER PRIMARY KEY,                 -- Chave primária: identificador único do item do pedido.
     id_pedido INT NOT NULL,                 -- Chave estrangeira para 'pedido_cabecalho'.
@@ -79,46 +53,22 @@ CREATE TABLE db_loja.pedido_itens (
         REFERENCES db_loja.pedido_cabecalho(id),
     CONSTRAINT fk_produto
         FOREIGN KEY(id_produto)
-        REFERENCES db_loja.produtos(id)
+        REFERENCES db_loja.produto(id)
 );
 
-
---
--- SEÇÃO 4: AUTOMAÇÃO DE TIMESTAMP (FUNÇÃO E TRIGGER)
---
--- Esta seção cria a lógica para atualizar automaticamente o campo 'data_atualizacao' na tabela 'produtos'.
---
-
--- 4.1. FUNÇÃO DO TRIGGER:
--- Esta função define a AÇÃO que o trigger irá executar.
--- Sua única responsabilidade é atualizar o campo 'data_atualizacao' para o horário atual (NOW()).
 CREATE OR REPLACE FUNCTION db_loja.atualizar_data_atualizacao_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
-   -- A variável especial 'NEW' representa a linha que está sendo inserida ou atualizada.
-   -- Aqui, estamos modificando o valor do campo 'data_atualizacao' dessa linha.
    NEW.data_atualizacao = NOW();
-   
-   -- Retorna a linha modificada para que a operação de UPDATE possa continuar normalmente.
    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql; -- Define a linguagem da função como PL/pgSQL, padrão do PostgreSQL.
 
--- 4.2. CRIAÇÃO DO TRIGGER (GATILHO):
--- Este é o "gatilho" que efetivamente monitora a tabela 'produtos'.
 CREATE TRIGGER trigger_produtos_atualizacao
 BEFORE UPDATE ON db_loja.produto              -- Dispara ANTES de qualquer comando UPDATE na tabela 'produtos'.
 FOR EACH ROW                                   -- A ação será executada para cada linha individual que for atualizada.
 EXECUTE FUNCTION db_loja.atualizar_data_atualizacao_trigger(); -- Executa a função que criamos acima.
 
-
---
--- SEÇÃO 5: INSERÇÃO DE DADOS DE EXEMPLO (INSERT)
---
--- Agora que a estrutura está pronta, populamos as tabelas com dados de exemplo.
---
-
--- Inserindo dados na tabela de categorias
 INSERT INTO db_loja.categorias_produto (id, nome, descricao) values
 (1, 'Eletrônicos', 'Dispositivos eletrônicos e acessórios.'),
 (2, 'Livros', 'Livros de diversos gêneros e autores.'),
@@ -131,8 +81,6 @@ INSERT INTO db_loja.categorias_produto (id, nome, descricao) values
 (9, 'Automotivo', 'Acessórios e peças para veículos.'),
 (10, 'Jardinagem', 'Ferramentas e suprimentos para jardinagem.');
 
--- Inserindo dados na tabela de produtos
--- Note que não precisamos informar 'data_criacao' e 'data_atualizacao', pois elas são preenchidas automaticamente.
 INSERT INTO db_loja.produto (id, nome, descricao, preco, estoque, id_categoria) VALUES
 (1, 'Smartphone X', 'Smartphone de última geração com 128GB.', 2999.90, 50, 1),
 (2, 'Notebook Pro', 'Notebook com processador i7, 16GB RAM.', 7499.50, 30, 1),
@@ -155,7 +103,6 @@ INSERT INTO db_loja.produto (id, nome, descricao, preco, estoque, id_categoria) 
 (19, 'Jogo de Chaves de Fenda', 'Com 6 peças de diferentes tamanhos.', 89.90, 150, 8),
 (20, 'Calça Jeans Slim', 'Jeans com elastano para maior conforto.', 149.90, 180, 3);
 
--- Inserindo dados na tabela de clientes
 INSERT INTO db_loja.cliente (id, nome, email, telefone) VALUES
 (1, 'João Silva', 'joao.silva@example.com', '(21) 98765-4321'),
 (2, 'Maria Oliveira', 'maria.oliveira@example.com', '(11) 91234-5678'),
@@ -170,14 +117,6 @@ INSERT INTO db_loja.cliente (id, nome, email, telefone) VALUES
 (11, 'Bruno Martins', 'bruno.m@example.com', '(48) 91111-0000'),
 (12, 'Patrícia Ribeiro', 'patricia.r@example.com', '(85) 90000-9999');
 
-
---
--- SEÇÃO 6: SIMULAÇÃO DE PEDIDOS
---
--- Inserindo dados de pedidos (cabeçalho e itens) para simular o funcionamento da loja.
---
-
--- Pedidos 1-10
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (1, 1, 3159.70, '2025-09-01 10:30:00'), (2, 2, 199.99, '2025-09-02 14:00:00'), (3, 3, 7499.50, '2025-09-03 11:00:00'),
 (4, 4, 449.80, '2025-09-04 09:15:00'), (5, 5, 1499.00, '2025-09-05 18:00:00'), (6, 6, 379.80, '2025-09-06 13:45:00'),
@@ -189,7 +128,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (6, 4, 14, 1, 49.90), (7, 5, 6, 1, 1499.00), (8, 6, 7, 1, 249.90), (9, 6, 17, 1, 129.90), (10, 7, 8, 1, 179.90),
 (11, 7, 18, 2, 29.90), (12, 8, 9, 1, 299.00), (13, 9, 10, 1, 1899.00), (14, 10, 11, 1, 499.50), (15, 10, 12, 1, 34.90);
 
--- Pedidos 11-20
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (11, 11, 339.80, '2025-09-11 15:00:00'), (12, 12, 1400.00, '2025-09-12 17:00:00'), (13, 1, 450.00, '2025-09-13 08:00:00'),
 (14, 2, 89.90, '2025-09-14 14:20:00'), (15, 3, 309.70, '2025-09-15 16:50:00'), (16, 5, 209.80, '2025-09-15 17:00:00'),
@@ -201,7 +139,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (21, 15, 4, 2, 79.90), (22, 15, 20, 1, 149.90), (23, 16, 17, 1, 129.90), (24, 16, 14, 1, 49.90), (25, 16, 18, 1, 29.90),
 (26, 17, 4, 1, 79.90), (27, 18, 3, 1, 199.99), (28, 19, 12, 1, 34.90), (29, 20, 18, 2, 29.90);
 
--- Pedidos 21-30
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (21, 1, 499.50, '2025-09-17 18:00:00'), (22, 4, 179.90, '2025-09-18 10:00:00'), (23, 6, 299.00, '2025-09-18 11:00:00'),
 (24, 8, 399.90, '2025-09-18 14:30:00'), (25, 10, 149.90, '2025-09-18 16:00:00'), (26, 2, 2999.90, '2025-09-19 09:45:00'),
@@ -212,7 +149,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (30, 21, 11, 1, 499.50), (31, 22, 8, 1, 179.90), (32, 23, 9, 1, 299.00), (33, 24, 5, 1, 399.90), (34, 25, 20, 1, 149.90),
 (35, 26, 1, 1, 2999.90), (36, 27, 13, 1, 189.90), (37, 28, 19, 1, 89.90), (38, 29, 15, 2, 350.00), (39, 30, 7, 1, 249.90);
 
--- Pedidos 31-40
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (31, 12, 129.90, '2025-09-20 15:30:00'), (32, 11, 450.00, '2025-09-20 17:00:00'), (33, 1, 69.80, '2025-09-21 10:00:00'),
 (34, 4, 359.80, '2025-09-21 11:30:00'), (35, 6, 79.90, '2025-09-21 12:00:00'), (36, 8, 1499.00, '2025-09-21 14:00:00'),
@@ -223,7 +159,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (40, 31, 17, 1, 129.90), (41, 32, 16, 1, 450.00), (42, 33, 12, 2, 34.90), (43, 34, 8, 2, 179.90), (44, 35, 4, 1, 79.90),
 (45, 36, 6, 1, 1499.00), (46, 37, 5, 1, 399.90), (47, 38, 9, 1, 299.00), (48, 39, 10, 1, 1899.00), (49, 40, 3, 1, 199.99);
 
--- Pedidos 41-50
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (41, 7, 7499.50, '2025-09-22 12:00:00'), (42, 9, 499.50, '2025-09-22 14:00:00'), (43, 11, 29.90, '2025-09-22 15:00:00'),
 (44, 12, 49.90, '2025-09-22 16:00:00'), (45, 1, 149.90, '2025-09-22 17:00:00'), (46, 4, 189.90, '2025-09-23 09:30:00'),
@@ -234,7 +169,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (50, 41, 2, 1, 7499.50), (51, 42, 11, 1, 499.50), (52, 43, 18, 1, 29.90), (53, 44, 14, 1, 49.90), (54, 45, 20, 1, 149.90),
 (55, 46, 13, 1, 189.90), (56, 47, 19, 1, 89.90), (57, 48, 15, 3, 350.00), (58, 49, 7, 1, 249.90), (59, 50, 17, 1, 129.90);
 
--- Pedidos 51-60
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (51, 3, 450.00, '2025-09-23 15:00:00'), (52, 5, 34.90, '2025-09-23 16:00:00'), (53, 7, 159.80, '2025-09-23 17:00:00'),
 (54, 9, 179.90, '2025-09-23 18:00:00'), (55, 11, 299.00, '2025-09-23 19:00:00'), (56, 1, 399.90, '2025-09-23 20:00:00'),
@@ -245,7 +179,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (60, 51, 16, 1, 450.00), (61, 52, 12, 1, 34.90), (62, 53, 4, 2, 79.90), (63, 54, 8, 1, 179.90), (64, 55, 9, 1, 299.00),
 (65, 56, 5, 1, 399.90), (66, 57, 6, 1, 1499.00), (67, 58, 3, 1, 199.99), (68, 59, 2, 1, 7499.50), (69, 60, 10, 1, 1899.00);
 
--- Pedidos 61-70
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (61, 2, 2999.90, '2025-09-24 12:00:00'), (62, 3, 499.50, '2025-09-24 13:00:00'), (63, 5, 59.80, '2025-09-24 14:00:00'),
 (64, 7, 149.90, '2025-09-24 15:00:00'), (65, 9, 189.90, '2025-09-24 16:00:00'), (66, 11, 89.90, '2025-09-24 17:00:00'),
@@ -256,7 +189,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (70, 61, 1, 1, 2999.90), (71, 62, 11, 1, 499.50), (72, 63, 18, 2, 29.90), (73, 64, 20, 1, 149.90), (74, 65, 13, 1, 189.90),
 (75, 66, 19, 1, 89.90), (76, 67, 15, 1, 350.00), (77, 68, 7, 1, 249.90), (78, 69, 17, 1, 129.90), (79, 70, 16, 1, 450.00);
 
--- Pedidos 71-80
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (71, 8, 34.90, '2025-09-25 09:00:00'), (72, 10, 79.90, '2025-09-25 10:00:00'), (73, 2, 179.90, '2025-09-25 11:00:00'),
 (74, 3, 299.00, '2025-09-25 12:00:00'), (75, 5, 399.90, '2025-09-25 13:00:00'), (76, 7, 1499.00, '2025-09-25 14:00:00'),
@@ -267,7 +199,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (80, 71, 12, 1, 34.90), (81, 72, 4, 1, 79.90), (82, 73, 8, 1, 179.90), (83, 74, 9, 1, 299.00), (84, 75, 5, 1, 399.90),
 (85, 76, 6, 1, 1499.00), (86, 77, 3, 1, 199.99), (87, 78, 2, 1, 7499.50), (88, 79, 10, 1, 1899.00), (89, 80, 1, 1, 2999.90);
 
--- Pedidos 81-90
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (81, 4, 499.50, '2025-09-25 19:00:00'), (82, 6, 29.90, '2025-09-25 20:00:00'), (83, 8, 149.90, '2025-09-25 21:00:00'),
 (84, 10, 189.90, '2025-09-26 09:00:00'), (85, 2, 89.90, '2025-09-26 10:00:00'), (86, 3, 350.00, '2025-09-26 11:00:00'),
@@ -278,7 +209,6 @@ INSERT INTO db_loja.pedido_itens (id, id_pedido, id_produto, quantidade, preco_u
 (90, 81, 11, 1, 499.50), (91, 82, 18, 1, 29.90), (92, 83, 20, 1, 149.90), (93, 84, 13, 1, 189.90), (94, 85, 19, 1, 89.90),
 (95, 86, 15, 1, 350.00), (96, 87, 7, 1, 249.90), (97, 88, 17, 1, 129.90), (98, 89, 16, 1, 450.00), (99, 90, 12, 1, 34.90);
 
--- Pedidos 91-100
 INSERT INTO db_loja.pedido_cabecalho (id, id_cliente, valor_total, data_pedido) VALUES
 (91, 12, 79.90, '2025-09-26 16:00:00'), (92, 1, 179.90, '2025-09-26 17:00:00'), (93, 4, 299.00, '2025-09-26 18:00:00'),
 (94, 6, 399.90, '2025-09-26 19:00:00'), (95, 8, 1499.00, '2025-09-26 20:00:00'), (96, 10, 199.99, '2025-09-26 21:00:00'),

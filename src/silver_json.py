@@ -23,11 +23,11 @@ FAM_PRODUTOS  = "dados_produtos/"
 FAM_TAGS      = "dados_tags/"
 
 # Destinos SILVER
-SILVER_TRANSACOES      = "silver/transacoes/"
-SILVER_PEDIDOS_HDR     = "silver/pedidos_externos/"
-SILVER_PEDIDOS_ITENS   = "silver/pedidos_externos_itens/"
-SILVER_PRODUTOS        = "silver/produtos_parceiros/"
-SILVER_TAGS            = "silver/tags_produtos/"
+SILVER_TRANSACOES      = "silver/json/transacoes/"
+SILVER_PEDIDOS_HDR     = "silver/json/pedidos_externos/"
+SILVER_PEDIDOS_ITENS   = "silver/json/pedidos_externos_itens/"
+SILVER_PRODUTOS        = "silver/json/produtos_parceiros/"
+SILVER_TAGS            = "silver/json/tags_produtos/"
 
 def connect_minio() -> Minio:
     cli = Minio(
