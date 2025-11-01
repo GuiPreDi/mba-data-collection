@@ -15,6 +15,8 @@ Este script utiliza a biblioteca 'minio' para:
 # Importamos a biblioteca Minio e a classe BytesIO para simular um arquivo em memória.
 from minio import Minio
 from io import BytesIO
+from minio.error import S3Error
+
 
 def main():
     """Função principal que executa o teste de conexão e operação do Minio."""
@@ -48,9 +50,16 @@ def main():
 
     # 3. Definir nome do bucket e do objeto
     
-    def create_bucket(bucket_name, folder_path):
+    def create_bucket(bucket_name):
+        """
+        Verifica e cria um bucket e, em seguida, verifica e cria
+        as pastas (objetos de 0 bytes) dentro dele.
+
+        :param bucket_name: Nome do bucket
+        :param folder_path: Lista de caminhos de pasta (ex: ["bronze/", "silver/"])
+        """
         try:
-            # 4. Verificar e Criar o Bucket
+            # 1. Verificar e Criar o Bucket
             found = minio_client.bucket_exists(bucket_name)
             if not found:
                 print(f"Bucket '{bucket_name}' não encontrado. Criando...")
@@ -59,24 +68,11 @@ def main():
             else:
                 print(f"Bucket '{bucket_name}' já existe.")
 
-            for folder in folder_path:
-            # Criamos um objeto vazio (0 bytes)
-            # O BytesIO(b"") cria um stream de bytes vazio
-            # O nome do objeto (object_name) é o nome da pasta com a barra
-                minio_client.put_object(
-                    bucket_name=bucket_name,
-                    object_name=folder,
-                    data=BytesIO(b""), # Conteúdo vazio
-                    length=0 # Tamanho 0
-                )
-            print(f"Pasta '{folder}' criada em '{bucket_name}'.")
-
         except Exception as e:
-            # Se qualquer erro relacionado ao Minio ocorrer no bloco 'try',
-            # ele será capturado aqui.
-            print(f"\nOcorreu um erro durante as operações do Minio: {e}")
+            # Se qualquer erro geral ocorrer (ex: falha na conexão)
+            print(f"\nOcorreu um erro geral durante as operações do Minio: {e}")
 
-    create_bucket('datalake',["bronze/", "silver/"])
+    create_bucket('datalake')
 
 if __name__ == '__main__':
     main()
