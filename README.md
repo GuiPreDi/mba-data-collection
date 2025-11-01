@@ -1,197 +1,220 @@
-# Ambiente de Desenvolvimento com PySpark, PostgreSQL e MinIO
+# 🏗️ Data Lake - Arquitetura Medallion com MinIO e Spark
 
-Este repositório fornece um ambiente de desenvolvimento pré-configurado para projetos de dados que utilizam **PySpark**, **Pandas**, **PostgreSQL** e **MinIO** (armazenamento de objetos S3).
+Este repositório implementa uma **arquitetura de Data Lake em camadas** (Medallion Architecture: Bronze → Silver), utilizando **Python, PySpark, MinIO (S3-compatible)** e **PostgreSQL** como fonte de dados.
 
-O objetivo principal é padronizar e acelerar a configuração do ambiente de trabalho através do uso de **Dev Containers** e **GitHub Codespaces**, fornecendo um stack completo e pronto para uso em minutos.
+O pipeline está dividido em etapas modulares, iniciando pela criação da infraestrutura de buckets no MinIO e seguindo com extrações, transformações e publicações em camadas refinadas.
 
-## Sobre o Ambiente e a Tecnologia
+---
 
-Este é um template de ambiente de desenvolvimento baseado na especificação **Dev Containers** e projetado para ser executado na plataforma **GitHub Codespaces**. Ele automatiza a criação de um ambiente de desenvolvimento conteinerizado que já inclui todas as ferramentas e dependências necessárias.
+## 📂 Estrutura de Diretórios
 
-### O que é um Dev Container?
-
-Um Dev Container (ou Contêiner de Desenvolvimento) é um ambiente de desenvolvimento completo que roda dentro de um contêiner Docker. Trata-se de um padrão de código aberto que permite definir todos os componentes de um ambiente como código.
-
-*   **Como funciona?** Através de um arquivo de configuração (`.devcontainer/devcontainer.json`) e um `docker-compose.yml`, você especifica tudo o que o projeto precisa: os serviços (app, banco de dados, S3), o sistema operacional base, versões de linguagens (Python, etc.), ferramentas, extensões do editor (VS Code) e configurações.
-*   **Qual o benefício?** Ele resolve o clássico problema do "mas na minha máquina funciona". Como o ambiente é definido em código, qualquer pessoa que abrir o projeto terá um ambiente idêntico, consistente e reproduzível, garantindo que o código se comporte da mesma forma para todos.
-
-### O que é o GitHub Codespaces?
-
-O GitHub Codespaces é um produto da GitHub que oferece ambientes de desenvolvimento completos na nuvem. Pense nele como "Dev Containers como um Serviço".
-
-*   **Como funciona?** O Codespaces lê a configuração do Dev Container (`.devcontainer/`) diretamente do seu repositório. Em seguida, ele utiliza essa configuração para construir e hospedar o seu ambiente em uma máquina virtual poderosa na nuvem. Você acessa este ambiente completo através do seu navegador, sem precisar instalar nada localmente.
-*   **Qual o benefício?** Ele combina o poder da padronização dos Dev Containers com a flexibilidade da nuvem. Você pode programar de qualquer dispositivo, ter acesso a recursos computacionais robustos sob demanda e começar a trabalhar em um projeto novo em questão de minutos, com o ambiente já 100% configurado.
-
-### Tecnologias Inclusas
-
-O ambiente provisionado inclui os seguintes serviços e ferramentas:
-
-*   **Python 3.11**: Linguagem de programação base.
-*   **Apache Spark (via PySpark)**: Plataforma para processamento de dados em larga escala.
-*   **Pandas**: Biblioteca para manipulação e análise de dados.
-*   **PostgreSQL 15**: Banco de dados relacional de código aberto, rodando como um serviço separado.
-*   **MinIO**: Um serviço de armazenamento de objetos de alta performance compatível com a API do Amazon S3. Ideal para armazenar "data lakes", arquivos brutos, backups, etc.
-*   **Docker**: Plataforma de containerização que gerencia todos os serviços.
-*   **GitHub Codespaces**: Plataforma de nuvem que hospeda e executa o ambiente.
-
-### Principais Vantagens
-
-*   **Stack Completo**: Ambiente pronto com processamento (PySpark), banco de dados (PostgreSQL) e armazenamento de objetos (MinIO).
-*   **Inicialização Rápida**: O ambiente fica pronto para uso em poucos minutos, eliminando a necessidade de instalações e configurações manuais.
-*   **Consistência**: Garante que todos os usuários operem com a mesma configuração de software e dependências, prevenindo problemas de compatibilidade.
-*   **Isolamento**: As ferramentas e bibliotecas são executadas dentro de containers, não interferindo com a configuração da máquina local do usuário.
-*   **Portabilidade**: O ambiente pode ser acessado de qualquer dispositivo com um navegador web.
-
-## Guia de Utilização
-
-Para utilizar este ambiente, siga os passos abaixo.
-
-### Passo 1: Criar um "Fork" do Repositório
-
-É recomendado criar uma cópia pessoal deste repositório na sua conta do GitHub. Um "fork" permite que você modifique o código livremente.
-
-1.  Clique no botão "**Fork**" no canto superior direito desta página.
-2.  Na tela seguinte, confirme a criação do fork clicando em "**Create fork**".
-
-### Passo 2: Iniciar o GitHub Codespace
-
-O Codespace irá construir e iniciar o ambiente de desenvolvimento.
-
-1.  Na página do seu fork, clique no botão verde `< > Code`.
-2.  Selecione a aba "**Codespaces**".
-3.  Clique em "**Create codespace on main**".
-
-O processo de inicialização pode levar alguns minutos, especialmente no primeiro uso. Ao final, uma nova aba será aberta com uma instância do VS Code funcional em seu navegador.
-
-### Passo 3: Verificação do Ambiente
-
-Para confirmar que todos os serviços estão operacionais e se comunicando, execute os scripts de teste localizados na raiz do projeto.
-
-Abra o terminal integrado no VS Code (geralmente na parte inferior da tela) e execute os seguintes comandos:
-
-*   **Teste do Pandas**:
-    ```bash
-    python teste_pandas.py
-    ```
-    (A saída esperada é a impressão de DataFrames com dados de produtos).
-*   **Teste de Conexão com o PostgreSQL**:
-    ```bash
-    python teste_postgres.py
-    ```
-    (A saída esperada é uma mensagem de sucesso com a versão do PostgreSQL).
-*   **Teste de Conexão com o MinIO (S3)**:
-    ```bash
-    python teste_minio.py
-    ```
-    (A saída esperada é uma mensagem de sucesso indicando conexão, criação de um bucket e upload de um arquivo de teste).
-
-A execução bem-sucedida de todos os scripts confirma que o ambiente está configurado corretamente.
-
-### Banco de Dados de Exemplo (`db_loja`)
-
-Este repositório inclui um script SQL (`script-ddl-dbloja.sql`) que cria e popula um banco de dados de e-commerce completo para fins de demonstração.
-
-O script cria o schema `db_loja` e as seguintes tabelas:
-
-*   `categorias_produto`
-*   `produto`
-*   `cliente`
-*   `pedido_cabecalho`
-*   `pedido_itens`
-
-Ele também insere centenas de registros de exemplo (produtos, clientes, pedidos), permitindo que você comece a testar consultas e jobs de PySpark imediatamente.
-
-Veja a seção "**Conectando ao Banco de Dados PostgreSQL**" abaixo para instruções sobre como executar este script.
-
-## Salvando e Enviando Alterações para o GitHub (Fluxo Básico do Git)
-
-Após modificar ou criar arquivos, você precisa salvar seu progresso no GitHub. Este é o ciclo padrão que você usará repetidamente.
-
-### Passo 1: Verificar o Status das Alterações
-
-Veja o que você modificou.
-
-```bash
-git status
+```
+.
+├── create_buckets.py          # Cria bucket e estrutura base no MinIO
+│
+├── bronze/
+│   ├── bronze_dbloja.py       # Extrai dados do PostgreSQL e salva Parquet particionado
+│   ├── bronze_ibge.py         # Consome API pública (IBGE) e salva JSON no MinIO
+│   └── bronze_json.py         # Faz upload em lote de arquivos JSON locais
+│
+└── silver/
+    ├── silver_dbloja.py       # Converte Parquets da Bronze (db_loja) para Silver com tipos refinados
+    ├── silver_ibge.py         # Converte JSON (API IBGE) em Parquet estruturado
+    └── silver_json.py         # Normaliza múltiplos JSONs de uma loja (pedidos, produtos, etc.)
 ```
 
-### Passo 2: Adicionar as Alterações para "Empacotamento"
+---
 
-Adicione os arquivos que você deseja salvar ao "pacote" (Staging Area).
+## 🧱 Arquitetura Medallion
+
+O projeto segue a arquitetura de camadas **Bronze → Silver**, onde:
+
+| Camada | Função | Fonte / Destino |
+|--------|---------|----------------|
+| **Bronze** | Captura dados crus e históricos de múltiplas origens (APIs, bancos, arquivos). | PostgreSQL, APIs REST, JSON locais → MinIO (`bronze/`) |
+| **Silver** | Processa, normaliza e estrutura os dados, aplicando casts, flatten e deduplicação. | MinIO (`bronze/`) → MinIO (`silver/`) via Spark |
+
+---
+
+## ⚙️ 1. Criação de Buckets
+
+**Script:** `create_buckets.py`
+
+Este script conecta ao MinIO e cria os buckets e diretórios necessários para o pipeline:
+
+- Bucket padrão: `datalake`
+- Estrutura inicial criada:
+  ```
+  bronze/
+  silver/
+  ```
+  
+Uso:
 
 ```bash
-# Para adicionar TODOS os arquivos modificados e novos
-git add .
+python create_buckets.py
 ```
 
-### Passo 3: Criar um "Pacote" de Salvamento (Commit)
+---
 
-Crie um ponto na história do projeto com as alterações que você adicionou. É crucial escrever uma mensagem clara que descreva o que você fez.
+## 🪣 2. Camada Bronze
+
+### 🧩 a) PostgreSQL → Bronze (`bronze_dbloja.py`)
+
+Extrai tabelas de um schema PostgreSQL (`db_loja`) e salva como arquivos **Parquet particionados por data** no MinIO.  
+Há suporte a **cargas incrementais**, controladas por um arquivo JSON de metadados (`data_atualizacao.json`).
+
+**Fluxo:**
+1. Lê tabelas via `SQLAlchemy`.
+2. Verifica o timestamp da última execução no MinIO.
+3. Extrai dados novos e salva em `bronze/dbloja/<tabela>/data=YYYYMMDD/arquivo.parquet`.
+4. Atualiza o JSON de controle.
+
+---
+
+### 🌎 b) API → Bronze (`bronze_ibge.py`)
+
+Consome a **API pública do IBGE** via `BrasilAPI` e armazena a resposta JSON bruta no MinIO.  
+Cada execução gera uma partição nova (`data=YYYYMMDD`).
 
 ```bash
-git commit -m "Sua mensagem descritiva aqui"
+python bronze_ibge.py
 ```
 
-### Passo 4: Enviar as Alterações para o GitHub
+---
 
-Envie o seu "pacote" (commit) para o seu repositório remoto no GitHub.
+### 📁 c) JSON Local → Bronze (`bronze_json.py`)
+
+Realiza o upload de todos os arquivos `.json` encontrados no diretório local `/workspace/json` para o MinIO.  
+Cria partições por data automaticamente no formato:
+
+```
+bronze/json/<nome_arquivo>/data=YYYYMMDD/<nome_arquivo>_YYYYMMDD_HHMMSS.json
+```
+
+---
+
+## 💎 3. Camada Silver
+
+A camada **Silver** utiliza **PySpark** para ler dados da Bronze, aplicar *schema enforcement*, conversões e normalizações, e salvar versões refinadas no MinIO.
+
+---
+
+### 🏬 a) Silver DB Loja (`silver_dbloja.py`)
+
+Processa os Parquets do schema `db_loja` da Bronze e gera versões estruturadas com casts e validações.
+
+**Principais funcionalidades:**
+- Leitura e inferência de schema fixo para cada tabela (`cliente`, `pedido`, `produto`, etc.).
+- Conversão de colunas `LongType` para `TimestampType` e `DoubleType` para `DecimalType`.
+- Escrita consolidada (1 arquivo) e upload para `silver/dbloja/<tabela>/`.
+
+---
+
+### 🗺️ b) Silver IBGE (`silver_ibge.py`)
+
+Transforma o JSON mais recente do dataset IBGE em um Parquet tabular.
+
+**Etapas:**
+1. Localiza o JSON mais recente em `bronze/api/data=YYYYMMDD/`.
+2. Lê via Spark (`option("multiline", "true")`).
+3. Extrai e tipa colunas (`id`, `sigla`, `regiao_id`, etc.`).
+4. Remove marcadores `_SUCCESS` e realiza upload limpo para `silver/ibge_uf/`.
+
+---
+
+### 🛒 c) Silver JSON Loja (`silver_json.py`)
+
+Normaliza e estrutura diversos tipos de JSONs de uma loja fictícia:
+
+- **dados_extrato** → `silver/json/transacoes/`
+- **dados_pedidos** → `silver/json/pedidos_externos/` e `silver/json/pedidos_externos_itens/`
+- **dados_produtos** → `silver/json/produtos_parceiros/`
+- **dados_tags** → `silver/json/tags_produtos/`
+
+Cada tipo de arquivo passa por uma rotina específica de *flatten*, *explode* e *cast*, gerando Parquets organizados por tema.
+
+---
+
+## 🧰 Dependências
+
+Crie um ambiente virtual e instale os pacotes necessários:
 
 ```bash
-git push origin main
+pip install pyspark==3.5.0 pandas sqlalchemy==2.0.31 psycopg2-binary minio requests pyarrow
 ```
 
-## Gerenciamento dos Serviços
+---
 
-### Renomeando um Codespace
+## 🐳 Execução no Docker / Dev Container
 
-Por padrão, o GitHub gera nomes aleatórios para os Codespaces. É uma boa prática renomeá-los para algo mais descritivo.
+O projeto é compatível com ambientes baseados em **Docker Compose** contendo os serviços:
 
-1.  Acesse a sua lista de Codespaces em: `github.com/codespaces`.
-2.  Encontre o Codespace, clique no menu de três pontos (`...`) e selecione "**Rename**".
+- `minio` → Object Storage (porta 9000)
+- `db` → PostgreSQL
+- `spark` → Container local para execução dos jobs Spark (opcional)
 
-### Conectando ao Banco de Dados PostgreSQL
+---
 
-Você pode interagir diretamente com o banco de dados PostgreSQL de dentro do VS Code, graças a uma extensão que já vem pré-instalada.
+## 🚀 Ordem de Execução Recomendada
 
-1.  **Conectar ao Banco de Dados**:
-    1.  Na barra de atividades do lado esquerdo do VS Code, clique no ícone que parece um cilindro (**PostgreSQL**).
-    2.  No painel da extensão, clique no ícone `+` para adicionar uma nova conexão.
-    3.  Preencha os detalhes da conexão com as exatas credenciais definidas no arquivo `.devcontainer/docker-compose.yml`:
-        *   **Host**: `db` (Este é o nome do serviço do Postgres no Docker Compose. Não use `localhost`).
-        *   **User**: `myuser`
-        *   **Password**: `mypassword`
-        *   **Port**: `5432`
-        *   **Database**: `mydb`
-    4.  Clique no botão "**Connect**".
-2.  **Executar o Script de Carga** (`db_loja`):
-    1.  Após a conexão ser bem-sucedida, abra o arquivo `script-ddl-dbloja.sql` no editor.
-    2.  Clique com o botão direito em qualquer lugar dentro do editor de texto do script.
-    3.  Selecione a opção "**Execute Query**" (ou similar) para executar o script inteiro.
-    4.  Após a execução, clique com o botão direito na sua conexão `db` no painel da extensão e escolha "**Refresh**".
-    5.  Você agora poderá expandir o banco `mydb` e verá o novo schema `db_loja` com todas as tabelas e dados populados.
+1. **Criação de infraestrutura**
+   ```bash
+   python create_buckets.py
+   ```
 
-### Acessando o Console Web do MinIO
+2. **Cargas Bronze**
+   ```bash
+   python bronze_dbloja.py
+   python bronze_ibge.py
+   python bronze_json.py
+   ```
 
-O serviço MinIO inclui um console web para você gerenciar visualmente seus buckets e arquivos (objetos), similar ao console do Amazon S3.
+3. **Transformações Silver**
+   ```bash
+   python silver_dbloja.py
+   python silver_ibge.py
+   python silver_json.py
+   ```
 
-O Codespaces encaminha automaticamente as portas do MinIO (9000 para a API, 9001 para o console web).
+---
 
-1.  No VS Code, vá para a aba "**Portas**" (Ports) no painel inferior (ao lado de "Terminal", "Problemas", etc.).
-2.  Você verá uma lista de portas encaminhadas. Encontre a porta `9001` (`minio`).
-3.  Clique no ícone de "**Globo**" (Abrir no Navegador) ao lado da porta `9001`.
-4.  Uma nova aba do navegador será aberta com a tela de login do MinIO.
-5.  Use as credenciais definidas no `docker-compose.yml`:
-    *   **Access Key**: `minioadmin`
-    *   **Secret Key**: `minioadmin`
+## 🧭 Observações
 
-Ao logar, você verá o bucket `mybucket` (criado pelo Docker Compose) e o `meu-bucket-teste` (criado pelo script `teste_minio.py`), que contém o arquivo `teste.txt`.
+- Todos os scripts são autônomos e idempotentes.
+- A arquitetura pode ser estendida para camadas **Gold** e dashboards.
+- Os dados ficam organizados conforme boas práticas de *data partitioning* e *schema enforcement*.
+- A conexão com o MinIO é feita via endpoint `minio:9000` (não usar `localhost` dentro do Docker).
 
-## Próximos Passos
+---
 
-Com o ambiente funcional, você pode:
+## 📊 Exemplo de Estrutura no MinIO
 
-*   Modificar os scripts (`teste_pandas.py`, `teste_postgres.py`, etc.) para testar novas lógicas.
-*   Criar notebooks Jupyter (a extensão Python já dá suporte) para exploração de dados.
-*   Desenvolver jobs de PySpark que leem dados do MinIO, processam e gravam resultados no PostgreSQL.
-*   Desenvolver jobs que leem dados do PostgreSQL, processam e salvam backups ou datasets tratados no MinIO.
+```
+s3://datalake/
+├── bronze/
+│   ├── dbloja/
+│   │   ├── produto/data=20251031/produto_20251031_102311.parquet
+│   ├── api/
+│   │   ├── data=20251031/ibge-uf_20251031_103455.json
+│   └── json/
+│       ├── dados_extrato/data=20251031/dados_extrato_20251031_100000.json
+│
+└── silver/
+    ├── dbloja/
+    ├── ibge_uf/
+    └── json/
+        ├── transacoes/
+        ├── pedidos_externos/
+        ├── produtos_parceiros/
+        └── tags_produtos/
+```
 
+---
+
+## 🧩 Próximos Passos (Extensões Sugeridas)
+
+- Adicionar **camada Gold** (QuickSight / Power BI).
+- Integrar com **Airflow** para orquestração.
+- Implementar **Great Expectations** para validação de qualidade.
+- Adicionar **versionamento de schema** e **CI/CD (GitHub Actions)**.
